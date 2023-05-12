@@ -2,21 +2,24 @@ local Text = require("control_panel.text")
 
 local Panel = {}
 
-function Panel.new(buf)
+function Panel.new(attrs)
   local p = setmetatable({}, { __index = Panel })
 
-  p.buf = buf
-  p.tabs = {}
+  p._id = attrs.id
+  p._title = attrs.title
+  p._buf = attrs.buf
+  p._tabs_ordered = {}
+  p._tabs = {}
 
   return p
 end
 
 local buf
-local panel
+local panels = {}
 local win
 
 function Panel:set(tab)
-  self.current = tab
+  self._current = tab
   self:render()
 end
 
@@ -28,23 +31,32 @@ function Panel:tab(opts)
   text.wrap = 120
 
   vim.keymap.set("n", key, function()
-    panel:set(name)
-  end, { buffer = self.buf })
+    self:set(name)
+  end, { buffer = self._buf })
 
-  self.tabs[name] = { text = text, key = key }
+  table.insert(self._tabs_ordered, name)
+  self._tabs[name] = { text = text, key = key }
 
-  if self.current == nil then
-    self.current = name
+  if self._current == nil then
+    self._current = name
   end
 
   return self
 end
 
+function Panel:has_tab(name)
+  return not (self._tabs[name] == nil)
+end
+
+function Panel:tabs()
+  return vim.tbl_keys(self._tabs)
+end
+
 function Panel:append(opts)
   local tab = opts.tab
   local text = opts.text
-  self.tabs[tab].text:append(text)
-  self.tabs[tab].text:nl()
+  self._tabs[tab].text:append(text)
+  self._tabs[tab].text:nl()
 
   return self
 end
@@ -56,32 +68,30 @@ function Panel:render()
   text.wrap = 120
 
   text:nl():nl()
-  local first = true
 
-  for tabname, tab in pairs(self.tabs) do
+  text:append(self._title, "Blue", { wrap = true })
+
+  for _i, tabname in ipairs(self._tabs_ordered) do
+    local tab = self._tabs[tabname]
     local hl
-    if tabname == self.current then
+    if tabname == self._current then
       hl = "Visual"
     else
       hl = "Normal"
     end
 
-    if not first then
-      text:append(" ")
-    else
-      first = false
-    end
+    text:append(" ")
     text:append(" " .. tabname .. " (" .. tab.key .. ") ", hl, { wrap = true })
     text:highlight({ ["%(.%)"] = "@punctuation.special" })
   end
 
   text:nl():nl()
 
-  local body = text:concat(self.tabs[self.current].text)
+  local body = text:concat(self._tabs[self._current].text)
   body.padding = 2
   body.wrap = 120
 
-  body:render(self.buf)
+  body:render(self._buf)
 
   vim.api.nvim_set_current_win(win)
 
@@ -109,14 +119,26 @@ local function new_win()
   })
 end
 
-function M.setup()
+function M.register(opts)
+  local id = opts.id
+  local title = opts.title
   buf = vim.api.nvim_create_buf(0, 0)
-  panel = Panel.new(buf)
+  panels[id] = Panel.new({
+    id = id,
+    title = title,
+    buf = buf,
+  })
 
-  vim.api.nvim_create_user_command("ToggleControlPanel", M.toggle, {})
+  vim.api.nvim_create_user_command("ControlPanel", function(cmdopts)
+    local cmd = table.remove(cmdopts.fargs, 1)
+
+    if cmd == "toggle" then
+      M.toggle(table.concat(cmdopts.fargs, " "))
+    end
+  end, { nargs = "*" })
 end
 
-function M.toggle()
+function M.toggle(id)
   if win and vim.api.nvim_win_is_valid(win) then
     vim.api.nvim_win_close(win, true)
   else
@@ -124,12 +146,12 @@ function M.toggle()
       win = new_win()
     end
 
-    panel:render()
+    panels[id]:render()
   end
 end
 
-function M.panel()
-  return panel
+function M.panel(id)
+  return panels[id]
 end
 
 return M
