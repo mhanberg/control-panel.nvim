@@ -1,5 +1,7 @@
 # control-panel.nvim
 
+<img width="1602" alt="image" src="https://github.com/mhanberg/control-panel.nvim/assets/5523984/bded63bf-0ab1-435c-886a-8623b1dff02e">
+
 ```lua
 {
   "mhanberg/control-panel.nvim",
