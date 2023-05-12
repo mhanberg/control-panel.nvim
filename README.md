@@ -2,6 +2,12 @@
 
 <img width="1602" alt="image" src="https://github.com/mhanberg/control-panel.nvim/assets/5523984/bded63bf-0ab1-435c-886a-8623b1dff02e">
 
+## Example
+
+The following example reimplements my [output-panel.nvim](https://github.com/mhanberg/output-panel.nvim).
+
+You can toggle this panel with `:ControlPanel toggle output-panel`.
+
 ```lua
 {
   "mhanberg/control-panel.nvim",
