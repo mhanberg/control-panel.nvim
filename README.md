@@ -34,3 +34,9 @@
   end,
 }
 ```
+
+## License
+
+control-panel.nvim is MIT licensed unless otherwise noted.
+
+`lua/control_panel/text/init.lua` is a modified version of source code extracted from https://github.com/folke/lazy.nvim from [this](https://github.com/folke/lazy.nvim/blob/652b6febf8d5c99eb8cf4a1cec63da6db62e77d2/lua/lazy/view/text.lua) point in time and is licensed with Apache 2.0.
